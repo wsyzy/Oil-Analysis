@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
 import * as XLSX from 'xlsx';
 import { 
   FileSpreadsheet, Settings, Database, BarChart4, LayoutGrid, 
@@ -170,8 +170,7 @@ const App: React.FC = () => {
 
   const switchClusterMode = (mode: boolean) => {
     if (!clusterResult) return;
-    const k = clusterResult.k;
-    setClusterResult(performClustering(data, selectedCols, k, mode));
+    setClusterResult(performClustering(data, selectedCols, mode));
     setShowModeDropdown(false);
   };
 
@@ -189,7 +188,8 @@ const App: React.FC = () => {
 
   const CustomScatterDot = (props: any) => {
     const { cx, cy, payload } = props;
-    if (payload.isOutlier) {
+    // 在去除离群点模式下，离群点显示为×
+    if (clusterResult && clusterResult.excludeOutliers && payload.isOutlier) {
       return (
         <g transform={`translate(${cx},${cy})`}>
           <line x1="-6" y1="-6" x2="6" y2="6" stroke="#ef4444" strokeWidth="2.5" />
@@ -249,9 +249,7 @@ const App: React.FC = () => {
               <BarChart4 size={20} /><span className="text-[10px] font-bold">相关性分析</span>
             </button>
             <button disabled={selectedCols.length < 2} onClick={() => { 
-                const kInput = prompt(`请输入聚类数量 K (建议 2-6):`, "3");
-                const k = parseInt(kInput || "3");
-                setClusterResult(performClustering(data, selectedCols, k, false)); 
+                setClusterResult(performClustering(data, selectedCols, false)); 
                 setShowModal('cluster'); 
               }}
               className="flex flex-col items-center gap-2 p-4 bg-emerald-50 text-emerald-700 rounded-xl hover:bg-emerald-100 transition-all disabled:opacity-50">
@@ -418,14 +416,14 @@ const App: React.FC = () => {
                                return null;
                             }} />
                             <Legend verticalAlign="top" height={36} />
-                            <Scatter name="样本空间分布 (颜色区分簇，×标识离群点)" data={clusterResult.pcaData} shape={<CustomScatterDot />} />
+                            <Scatter name={clusterResult.excludeOutliers ? "样本空间分布 (颜色区分簇，×标识离群点)" : "样本空间分布 (颜色区分簇)"} data={clusterResult.pcaData} shape={<CustomScatterDot />} />
                           </ScatterChart>
                         </ResponsiveContainer>
                       </div>
                       <div className="flex justify-center gap-8 text-[11px] font-medium text-slate-500 bg-slate-100/50 p-6 rounded-2xl border border-slate-100">
                          <div className="flex items-center gap-3"><div className="w-4 h-4 rounded-full bg-blue-500 shadow-sm" /> 正常簇成员 (Cluster Samples)</div>
-                         <div className="flex items-center gap-3"><span className="text-red-500 text-xl font-black">×</span> 异常离群点 (Outliers)</div>
-                         <div className="flex items-center gap-3"><div className="w-4 h-4 rounded-full bg-slate-400 shadow-sm opacity-50" /> 排除的点 (仅去除模式)</div>
+                         {clusterResult.excludeOutliers && <div className="flex items-center gap-3"><span className="text-red-500 text-xl font-black">×</span> 异常离群点 (Outliers)</div>}
+                         {clusterResult.excludeOutliers && <div className="flex items-center gap-3"><div className="w-4 h-4 rounded-full bg-slate-400 shadow-sm opacity-50" /> 排除的点 (仅去除模式)</div>}
                       </div>
                     </div>
 

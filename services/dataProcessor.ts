@@ -127,7 +127,6 @@ export const getSuggestedK = (matrix: number[][]): { bestK: number; metrics: KMe
 export const performClustering = (
   data: DataRow[], 
   selectedCols: string[], 
-  k: number, 
   excludeOutliers: boolean = false
 ): ClusterResult => {
   let log = `[${new Array(30).fill('=').join('')}]\n`;
@@ -166,7 +165,7 @@ export const performClustering = (
   log += `轮廓系数评估完成。建议最佳 K 值为: ${bestK}。\n`;
 
   // 5. 最终聚类
-  const ans = kmeans(finalMatrix, k, { initialization: 'kmeans++' });
+  const ans = kmeans(finalMatrix, bestK, { initialization: 'kmeans++' });
   const { avg: avgSilhouette, samples: silhouetteSamples } = calculateSilhouette(finalMatrix, ans.clusters);
   log += `聚类完成。平均轮廓系数: ${avgSilhouette.toFixed(4)}\n`;
 
@@ -187,7 +186,7 @@ export const performClustering = (
   const stats: Record<number, Record<string, number>> = {};
   const scaledStats: Record<number, Record<string, { mean: number; variance: number }>> = {};
 
-  for (let i = 0; i < k; i++) {
+  for (let i = 0; i < bestK; i++) {
     stats[i] = {};
     scaledStats[i] = {};
     const clusterPointsRaw = finalData.filter((_, idx) => ans.clusters[idx] === i);
@@ -210,7 +209,7 @@ export const performClustering = (
   log += `[${new Array(30).fill('=').join('')}]\n分析成功结束。`;
 
   return {
-    k,
+    k: bestK,
     clusters: ans.clusters,
     centroids: ans.centroids,
     pcaData,
