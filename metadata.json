@@ -1,0 +1,5 @@
+{
+  "name": "石油数据分析专家系统",
+  "description": "一个集成化的石油数据分析平台，支持Excel导入、厂名修正、皮尔逊相关性分析以及K-Means聚类分析，具备高颜值的Excel式交互界面和专业的数据可视化功能。",
+  "requestFramePermissions": []
+}
